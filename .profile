@@ -1,8 +1,9 @@
+# .profile
+
 #set -x MOZ_ENABLE_WAYLAND 1
 export MOZ_ENABLE_WAYLAND=1
 export EDITOR=/usr/bin/vim
 
-# .profile
 
 alias al='vim ~/.profile && . ~/.profile && echo Resourced ~/.profile'
 alias ..='cd ..'
@@ -27,3 +28,6 @@ alias host='getent hosts'
 gclone() {
 	git clone git@github.com:$1
 }
+
+# pass
+alias pass='PASSWORD_STORE_ENABLE_EXTENSIONS=true pass'
