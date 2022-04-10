@@ -1,3 +1,7 @@
+#set -x MOZ_ENABLE_WAYLAND 1
+export MOZ_ENABLE_WAYLAND=1
+export EDITOR=/usr/bin/vim
+
 # .profile
 
 alias al='vim ~/.profile && . ~/.profile && echo Resourced ~/.profile'
@@ -11,8 +15,9 @@ c() {
 }
 
 alias ls='ls --color=auto'
-alias la='ls -la'
+alias la='ls -a'
 alias ll='ls -l'
+alias lla='ls -la'
 
 # network
 alias ip6='ip address | grep inet6'
