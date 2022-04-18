@@ -2,7 +2,8 @@
 
 # deps
 dependencies_install() {
-  pacman -S fzf the_silver_searcher jq jo 
+  pacman -S fzf the_silver_searcher jq jo go
+  go install github.com/miko/go-graphql-cli@latest
 }
 
 
@@ -29,19 +30,23 @@ alias lla='ls -la'
 alias ip6='ip address | grep inet6'
 alias host='getent hosts'
 
-# gh
-gclone() {
-	git clone git@github.com:$1
-}
-# quick clone own repos, fill the .repos file with update script below
-gclonefzf() {
-  cat ~/.repos | fzf | xargs -i git clone git@github.com:{}
-}
-
 # pass
 alias pass='PASSWORD_STORE_ENABLE_EXTENSIONS=true pass'
 
 # github
+#
+# quick clone own repos, fill the .repos file with update script below
+gclonefzf() {
+  cat ~/.repos | fzf | xargs -i git clone git@github.com:{}
+}
+# gclone <owner/repo>
+gclone() {
+  if [ "$1" == "" ] ; then 
+    gclonefzf
+  else
+    git clone git@github.com:$1
+  fi
+}
 github_get_repos() (
   header="Authorization: token $GITHUB_TOKEN"
   url='https://api.github.com/graphql'
