@@ -6,12 +6,15 @@ dependencies_install() {
 }
 
 
+# quickly update aliases
 alias al='vim ~/.aliases && . ~/.aliases && echo Resourced ~/.aliases'
+# quickly update path
 alias pa='vim ~/.path && . ~/.path && echo Resourced ~/.path'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
+# quickly jump to a sub directory
 c() {
 	dir=$(find -maxdepth 3 -type d | fzf)
 	cd "$dir"
@@ -30,11 +33,46 @@ alias host='getent hosts'
 gclone() {
 	git clone git@github.com:$1
 }
+# quick clone own repos, fill the .repos file with update script below
+gclonefzf() {
+  cat ~/.repos | fzf | xargs -i git clone git@github.com:{}
+}
 
 # pass
 alias pass='PASSWORD_STORE_ENABLE_EXTENSIONS=true pass'
 
 # github
 github_get_repos() (
-  echo hi
+  header="Authorization: token $GITHUB_TOKEN"
+  url='https://api.github.com/graphql'
+  query='{viewer{repositories(last: 1) {edges{cursor}}}}'
+  query="{viewer{
+   repositories(last: 1) {edges{cursor}}
+  }}"
+  last_cursor=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" | jq --raw-output .viewer.repositories.edges[].cursor)
+  #echo $last_cursor
+
+  query="query(\$after: String){viewer{
+   repositories(first: 5 after: \$after){ edges{
+     cursor 
+     node { name owner {login} }
+   }}
+  }}"
+  cursor=
+   
+  while [ "$last_cursor" != "$cursor" ] ; do
+
+    if [ "$cursor" != "" ] ; then
+      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" --var after=$cursor)
+    else 
+      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query")
+    fi
+
+    cursor=$(echo $result | jq --raw-output '.viewer.repositories.edges[-1].cursor')
+    echo $result | jq --raw-output '.viewer.repositories.edges[].node| .owner.login + "/" + .name'
+
+  done
+)
+github_update_repo_list() (
+  github_get_repos > ~/.repos
 )
