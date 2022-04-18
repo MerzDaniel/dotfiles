@@ -1,0 +1,6 @@
+PATH=/usr/local/sbin:/usr/local/bin:/usr/bin
+
+# extend here
+# PATH=<path>:$PATH
+
+export PATH
