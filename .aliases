@@ -32,6 +32,7 @@ alias host='getent hosts'
 
 # pass
 alias pass='PASSWORD_STORE_ENABLE_EXTENSIONS=true pass'
+alias pw='pass fzf -c'
 
 # github
 #
