@@ -1,6 +1,9 @@
-
-ln -s ~/git/dotfiles/.aliases ~/
-ln -s ~/git/dotfiles/.vimrc ~/
-cp .path ~/
-cp .tokens ~/
+# setup.sh
+setup() (
+  ln -s "$(pwd)/.aliases" ~/
+  ln -s "$(pwd)/.vimrc" ~/
+  cp .path ~/
+  cp .tokens ~/
+)
+setup
 
