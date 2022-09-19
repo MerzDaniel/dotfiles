@@ -5,3 +5,5 @@ set tabstop=2
 set shiftwidth=2
 " On pressing tab, insert 4 spaces
 set expandtab
+" line numbering
+set number
