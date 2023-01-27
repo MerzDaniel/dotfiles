@@ -51,31 +51,29 @@ gclone() {
 github_get_repos() (
   header="Authorization: token $GITHUB_TOKEN"
   url='https://api.github.com/graphql'
-  query='{viewer{repositories(last: 1) {edges{cursor}}}}'
-  query="{viewer{
-   repositories(last: 1) {edges{cursor}}
-  }}"
-  last_cursor=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" | jq --raw-output .viewer.repositories.edges[].cursor)
+  query='{owner: repositoryOwner(login: "actano"){repositories(last: 1) {edges{cursor}}}}'
+  last_cursor=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" | jq --raw-output .owner.repositories.edges[].cursor)
   #echo $last_cursor
 
-  query="query(\$after: String){viewer{
-   repositories(first: 5 after: \$after){ edges{
+  query='query($after: String $login: String!){owner: repositoryOwner(login: $login){
+   repositories(first: 25 after: $after){ edges{
      cursor 
      node { name owner {login} }
    }}
-  }}"
+  }}'
   cursor=
    
   while [ "$last_cursor" != "$cursor" ] ; do
 
+    echo iteration
     if [ "$cursor" != "" ] ; then
-      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" --var after=$cursor)
+      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" --var after=$cursor --var login=actano)
     else 
-      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query")
+      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" --var login=actano)
     fi
 
-    cursor=$(echo $result | jq --raw-output '.viewer.repositories.edges[-1].cursor')
-    echo $result | jq --raw-output '.viewer.repositories.edges[].node| .owner.login + "/" + .name'
+    cursor=$(echo $result | jq --raw-output '.owner.repositories.edges[-1].cursor')
+    echo $result | jq --raw-output '.owner.repositories.edges[].node| .owner.login + "/" + .name'
 
   done
 )
