@@ -42,38 +42,58 @@ gclonefzf() {
 }
 # gclone <owner/repo>
 gclone() {
-  if [ "$1" == "" ] ; then 
+  if [ "$1" == "" ] ; then
     gclonefzf
   else
     git clone git@github.com:$1
   fi
 }
+json_escape_string() (
+  # outputs the escaped string like this: "<escaped_string>"
+  if [ "$1" = "" ] ; then echo 'No argument given' >&2; exit 1; fi
+
+  jq -n --arg var "$1" '$var'
+  # | sed 's/^.\(.*\).$/\1/'
+)
+graphql_request() (
+  url=$1
+  headers=$2
+  query=$3
+  variables=$4
+  variables=${variables:+",\"variables\": $variables"}
+  curl -sH "$headers" --json "{ \"query\": $(json_escape_string $query) $variables }" $url
+)
 github_get_repos() (
   header="Authorization: token $GITHUB_TOKEN"
   url='https://api.github.com/graphql'
-  query='{owner: repositoryOwner(login: "actano"){repositories(last: 1) {edges{cursor}}}}'
-  last_cursor=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" | jq --raw-output .owner.repositories.edges[].cursor)
-  #echo $last_cursor
+  query='{owner: repositoryOwner(login: "actano"){repositories(last: 1 orderBy: { direction:ASC field:NAME } privacy:PRIVATE) {edges{cursor}}}}'
+
+  last_cursor=$(graphql_request "$url" "$header" "$query" | jq --raw-output '.data.owner.repositories.edges[0].cursor')
+  echo $last_cursor
+  # exit 0
 
   query='query($after: String $login: String!){owner: repositoryOwner(login: $login){
-   repositories(first: 25 after: $after){ edges{
-     cursor 
+   repositories(first: 100 after: $after orderBy: { direction:ASC field:NAME } privacy:PRIVATE){ edges{
+     cursor
      node { name owner {login} }
    }}
   }}'
   cursor=
-   
+
   while [ "$last_cursor" != "$cursor" ] ; do
 
-    echo iteration
+    # echo iteration
     if [ "$cursor" != "" ] ; then
-      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" --var after=$cursor --var login=actano)
-    else 
-      result=$(go-graphql-cli --header "$header"  --url "$url" --query "$query" --var login=actano)
+      result=$(graphql_request "$url" "$header" "$query" "{\"after\":\"$cursor\", \"login\":\"actano\"}")
+    else
+      result=$(graphql_request "$url" "$header" "$query" "{\"login\":\"actano\"}")
     fi
+    # echo Result: $result
+    # echo $result
 
-    cursor=$(echo $result | jq --raw-output '.owner.repositories.edges[-1].cursor')
-    echo $result | jq --raw-output '.owner.repositories.edges[].node| .owner.login + "/" + .name'
+    cursor=$(echo $result | jq --raw-output '.data.owner.repositories.edges[-1].cursor')
+    echo Current cursor: $cursor
+    echo $result | jq --raw-output '.data.owner.repositories.edges[].node| .owner.login + "/" + .name'
 
   done
 )
